@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { loginUser } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+export default function HomePage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,7 +13,7 @@ export default function LoginPage() {
   const mutation = useMutation({
     mutationFn: () => loginUser(email, password),
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token); // 👈 store JWT
+      localStorage.setItem("token", data.token);
       router.push("/dashboard");
     },
     onError: (err: any) => {
@@ -57,6 +57,13 @@ export default function LoginPage() {
         >
           {mutation.isPending ? "Logging in..." : "Login"}
         </button>
+
+        <p className="mt-4 text-sm text-center">
+          Don’t have an account?{" "}
+          <a href="/register" className="text-blue-500 hover:underline">
+            Register here
+          </a>
+        </p>
       </form>
     </div>
   );
