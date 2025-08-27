@@ -5,7 +5,7 @@ const router = Router();
 // Example user-specific data
 let userBatches: Record<string, any[]> = {
   "user1": [
-    { id: 1, name: "Full Body Workout", exercises: [ { workoutId: 1, reps: 10 } ] }
+    { id: 1, name: "Full Body Workout", exercises: [ { workoutId: 1, reps: 10, name: "Push Up" } ] }
   ]
 };
 

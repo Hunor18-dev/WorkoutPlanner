@@ -1,37 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useUser, useLogout } from "@/lib/hooks/useAuth";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<{ email: string; userName: string } | null>(null);
+  const { data: user, isLoading } = useUser();
+  const logout = useLogout();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/");
-      return;
-    }
-
-    axios
-      .get("http://localhost:5000/api/users/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setUser(res.data))
-      .catch(() => {
-        localStorage.removeItem("token");
-        router.push("/");
-      });
-  }, [router]);
-
-  if (!user) return <p className="p-6">Loading user...</p>;
+  if (isLoading) return <p className="p-6">Loading user...</p>;
+  if (!user) {
+    router.push("/"); // redirect if not logged in
+    return null;
+  }
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50">
-      <div className="w-full bg-white shadow-md p-4 text-center">
+      <div className="w-full bg-white shadow-md p-4 text-center flex justify-between">
         <h1 className="text-2xl font-bold">Welcome, {user.userName}!</h1>
+        <button
+          onClick={() => {
+            logout();
+            router.push("/");
+          }}
+          className="text-red-500 font-medium"
+        >
+          Logout
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10 w-3/4 max-w-4xl">
