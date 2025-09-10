@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { loginUser } from "@/lib/api/authApi";
 
 export default function LoginPage() {
@@ -16,51 +17,69 @@ export default function LoginPage() {
 
     try {
       const data = await loginUser(email, password);
-      localStorage.setItem("token", data.token); // save JWT
-      router.push("/dashboard"); // redirect to dashboard
+      localStorage.setItem("token", data.token);
+      router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message); // <-- now shows backend errors
+      setError(err.message);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <form onSubmit={handleLogin} className="bg-white shadow-lg rounded-xl p-8 w-96">
-        <h2 className="text-2xl font-bold mb-6">Login</h2>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md bg-white p-10 rounded-xl shadow-lg text-center">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/images/logo.png"
+            alt="Workout Manager Logo"
+            width={60}
+            height={60}
+          />
+        </div>
 
+        {/* Title */}
+        <h1 className="text-2xl font-bold mb-2">WORKOUT MANAGER</h1>
+        <h2 className="text-lg font-semibold mb-6">Login</h2>
+
+        {/* Error message */}
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full p-2 border rounded mb-4"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full p-2 border rounded mb-6"
-        />
+        {/* Form */}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full p-3 border border-gray-300 rounded-lg"
+          />
 
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
-        >
-          Login
-        </button>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full p-3 border border-gray-300 rounded-lg"
+          />
 
-        <p className="text-sm text-gray-500 mt-4">
+          <button
+            type="submit"
+            className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition"
+          >
+            Log In
+          </button>
+        </form>
+
+        {/* Register link */}
+        <p className="text-sm text-gray-500 mt-6">
           Don’t have an account?{" "}
           <a href="/register" className="text-blue-500 hover:underline">
             Register here
           </a>
         </p>
-      </form>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,7 @@
-using AuthService.Data;
-using AuthService.DTOs;
+using AuthService.DTOs.Auth;
+using AuthService.Managers.Interfaces;
 using AuthService.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,43 +14,29 @@ namespace AuthService.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly AppDbContext _db;
+        private readonly IAuthenticationService _authService;
         private readonly IConfiguration _config;
 
-        public AuthController(AppDbContext db, IConfiguration config)
+        public AuthController(IAuthenticationService authService, IConfiguration config)
         {
-            _db = db;
+            _authService = authService;
             _config = config;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterDto dto)
+        public async Task<IActionResult> Register(RegisterRequest request)
         {
-            if (await _db.Users.AnyAsync(u => u.Email == dto.Email))
-                return BadRequest("Email already registered.");
-
-            var user = new User
-            {
-                Email = dto.Email,
-                UserName = dto.UserName,
-                PasswordHash = HashPassword(dto.Password)
-            };
-
-            _db.Users.Add(user);
-            await _db.SaveChangesAsync();
-
-            return Ok(new { user.Id, user.Email });
+            await _authService.RegisterAsync(request);
+            return Ok();
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDto dto)
+        public async Task<IActionResult> Login(LoginRequest dto)
         {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-            if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
-                return Unauthorized("Invalid credentials.");
+            LoginResponse response = await _authService.LoginAsync(dto);
+            if (response == null) return Unauthorized("Invalid credentials.");
 
-            var token = GenerateJwtToken(user);
-            return Ok(new { token });
+            return Ok(new { response.AccessToken, response.RefreshToken });
         }
 
         // --- Helpers ---

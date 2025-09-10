@@ -136,3 +136,4 @@ C:\Users\user\Desktop\Projects\WorkoutPlanner\apps\auth-service\AuthService\obj\
 C:\Users\user\Desktop\Projects\WorkoutPlanner\apps\auth-service\AuthService\obj\Debug\net9.0\AuthService.pdb
 C:\Users\user\Desktop\Projects\WorkoutPlanner\apps\auth-service\AuthService\obj\Debug\net9.0\AuthService.genruntimeconfig.cache
 C:\Users\user\Desktop\Projects\WorkoutPlanner\apps\auth-service\AuthService\obj\Debug\net9.0\ref\AuthService.dll
+C:\Users\user\Desktop\Projects\WorkoutPlanner\apps\auth-service\AuthService\bin\Debug\net9.0\BCrypt.Net-Next.dll

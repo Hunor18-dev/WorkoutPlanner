@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "H6t1CI28L0M=",
+  "dgSpecHash": "8kzTI2bHnF0=",
   "success": true,
   "projectFilePath": "C:\\Users\\user\\Desktop\\Projects\\WorkoutPlanner\\apps\\auth-service\\AuthService\\AuthService.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\user\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\user\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\user\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\9.0.8\\microsoft.aspnetcore.authentication.jwtbearer.9.0.8.nupkg.sha512",
     "C:\\Users\\user\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.8\\microsoft.aspnetcore.openapi.9.0.8.nupkg.sha512",

@@ -4,12 +4,35 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AuthService.Data;
 using System;
+using AuthService.Managers.Interfaces;
+using AuthService.Models;
+using AuthService.Services.Interfaces;
+using AuthService.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Database ---
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+// Add services
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
+
+// JWT helper
+//builder.Services.AddSingleton<JwtUtils>();
+
+// Add controllers
+builder.Services.AddControllers();
+
+// Add swagger if you want
+builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddSwaggerGen();
 
 builder.Services.AddCors(options =>
 {
@@ -43,6 +66,12 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 app.UseCors("AllowFrontend");
+
+
+//app.UseSwagger();
+//app.UseSwaggerUI();
+
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();

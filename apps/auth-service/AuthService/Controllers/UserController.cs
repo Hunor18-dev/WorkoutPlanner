@@ -11,9 +11,9 @@ namespace AuthService.Controllers
     [Authorize] // 👈 requires JWT
     public class UsersController : ControllerBase
     {
-        private readonly AppDbContext _db;
+        private readonly AuthDbContext _db;
 
-        public UsersController(AppDbContext db)
+        public UsersController(AuthDbContext db)
         {
             _db = db;
         }
