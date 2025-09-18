@@ -8,6 +8,7 @@ using AuthService.Managers.Interfaces;
 using AuthService.Models;
 using AuthService.Services.Interfaces;
 using AuthService.Services.Implementations;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +45,7 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 // --- JWT Auth ---
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 

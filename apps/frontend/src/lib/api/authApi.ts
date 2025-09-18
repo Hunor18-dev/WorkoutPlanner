@@ -15,7 +15,7 @@ authApi.interceptors.request.use((config) => {
 });
 
 // Endpoints
-export async function registerUser(email: string, userName: string, password: string) {
+export async function register(email: string, userName: string, password: string) {
   try {
     const res = await authApi.post("/auth/register", { email, userName, password });
     return res.data;
@@ -26,7 +26,7 @@ export async function registerUser(email: string, userName: string, password: st
   }
 }
 
-export async function loginUser(email: string, password: string) {
+export async function login(email: string, password: string) {
   try {
     const res = await authApi.post("/auth/login", { email, password });
     return res.data; // { token }
@@ -34,9 +34,4 @@ export async function loginUser(email: string, password: string) {
     const message = err.response?.data || "Login failed.";
     throw new Error(message);
   }
-}
-
-export async function fetchCurrentUser() {
-  const res = await authApi.get("/users/me");
-  return res.data;
 }

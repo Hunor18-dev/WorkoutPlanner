@@ -10,9 +10,9 @@ public class RefreshTokenRepository(AuthDbContext db) : IRefreshTokenRepository
         await db.SaveChangesAsync(ct);
     }
 
-    public Task<RefreshToken?> GetActiveAsync(string token, CancellationToken ct)
+    public Task<RefreshToken?> GetActiveAsync(string token)
         => db.RefreshTokens.Include(x => x.User)
-                           .SingleOrDefaultAsync(x => x.Token == token && !x.Revoked && x.ExpiresAtUtc > DateTime.UtcNow, ct);
+                           .SingleOrDefaultAsync(x => x.Token == token && !x.Revoked && x.ExpiresAtUtc > DateTime.UtcNow);
 
     public async Task RevokeAsync(RefreshToken token, CancellationToken ct)
     {

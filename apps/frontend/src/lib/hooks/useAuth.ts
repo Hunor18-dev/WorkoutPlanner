@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchCurrentUser, loginUser, registerUser } from "../api/authApi";
+import { login, register } from "../api/authApi";
+import { fetchCurrentUser } from "../api/usersApi";
 
 export function useUser() {
   return useQuery({
@@ -16,9 +17,9 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: (data: { email: string; password: string }) =>
-      loginUser(data.email, data.password),
+      login(data.email, data.password),
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("token", data.accessToken);
       queryClient.invalidateQueries({ queryKey: ["user"] });
     },
   });
@@ -27,7 +28,7 @@ export function useLogin() {
 export function useRegister() {
   return useMutation({
     mutationFn: (data: { email: string; userName: string; password: string }) =>
-      registerUser(data.email, data.userName, data.password),
+      register(data.email, data.userName, data.password),
   });
 }
 
@@ -35,6 +36,7 @@ export function useLogout() {
   const queryClient = useQueryClient();
 
   return () => {
+    // update this part so it triggers the backend to remove the refresh token
     localStorage.removeItem("token");
     queryClient.clear(); // wipe cache
   };

@@ -2,15 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { useUser, useLogout } from "@/lib/hooks/useAuth";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { data: user, isLoading } = useUser();
   const logout = useLogout();
 
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login"); // redirect if not logged in
+    }
+  }, [isLoading, user, router]);
+
   if (isLoading) return <p className="p-6">Loading user...</p>;
   if (!user) {
-    router.push("/"); // redirect if not logged in
     return null;
   }
 

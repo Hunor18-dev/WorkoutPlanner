@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { loginUser } from "@/lib/api/authApi";
+import { useLogin } from "@/lib/hooks/useAuth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const { mutate: login } = useLogin();
+
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -16,8 +19,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const data = await loginUser(email, password);
-      localStorage.setItem("token", data.token);
+      const data = await login({ email, password });
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
