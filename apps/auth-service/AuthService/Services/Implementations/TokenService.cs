@@ -8,11 +8,11 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.Services.Implementations;
 
-public class TokenService(IConfiguration cfg) : ITokenService
+public class TokenService(IConfiguration config) : ITokenService
 {
-    private readonly string _issuer = cfg["Jwt:Issuer"]!;
-    private readonly string _audience = cfg["Jwt:Audience"]!;
-    private readonly string _key = cfg["Jwt:Key"]!;
+    private readonly string _issuer = config["Jwt:Issuer"]!;
+    private readonly string _audience = config["Jwt:Audience"]!;
+    private readonly string _key = config["Jwt:Key"]!;
 
     public string CreateAccessToken(User user, TimeSpan lifetime)
     {

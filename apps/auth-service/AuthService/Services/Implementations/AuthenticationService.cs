@@ -9,26 +9,23 @@ public class AuthenticationService : IAuthenticationService
     private readonly IRefreshTokenRepository _refreshTokens;
     private readonly ITokenService _tokenService;
     private readonly IPasswordHasher _hasher;
-    private readonly IConfiguration _cfg;
-
-    private readonly TimeSpan _accessLifetime = TimeSpan.FromMinutes(15);
-    private readonly TimeSpan _refreshLifetime = TimeSpan.FromDays(7);
+    private readonly TimeSpan _accessLifetime = TimeSpan.FromMinutes(30);
+    private readonly TimeSpan _refreshLifetime = TimeSpan.FromDays(10);
 
 
     public AuthenticationService(IUserRepository users,
                                 IRefreshTokenRepository refreshTokens,
                                 ITokenService tokenService,
                                 IPasswordHasher hasher,
-                                IConfiguration cfg)
+                                IConfiguration config)
     {
         _users = users;
         _refreshTokens = refreshTokens;
         _tokenService = tokenService;
         _hasher = hasher;
-        _cfg = cfg;
     }
 
-    public async Task RegisterAsync(RegisterRequest request)
+    public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
     {
         if (await _users.GetByEmailAsync(request.Email) != null)
             throw new InvalidOperationException("Email already registered");
@@ -41,14 +38,32 @@ public class AuthenticationService : IAuthenticationService
             PasswordHash = _hasher.Hash(request.Password)
         };
 
-        await _users.AddAsync(user);
-        await _users.SaveChangesAsync();
+        try
+        {
+            await _users.AddAsync(user);
+            await _users.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            // add logging for exceptions
+            return new RegisterResponse
+            {
+                Success = false,
+                Message = "User registration failed. Please try again later."
+            };
+        }
+
+        return new RegisterResponse
+        {
+            Success = true,
+            Message = "User registered successfully."
+        };
     }
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
         var user = await _users.GetByEmailAsync(request.Email);
-        if (user == null || !_hasher.Verify(request.Password, user.PasswordHash))
+        if (user is null || !_hasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials");
 
         var accessToken = _tokenService.CreateAccessToken(user, _accessLifetime);
@@ -64,91 +79,45 @@ public class AuthenticationService : IAuthenticationService
 
         await _refreshTokens.AddAsync(refreshTokenEntity, CancellationToken.None);
 
-        return new LoginResponse { AccessToken = accessToken, RefreshToken = refreshTokenEntity.Token };
+        return new LoginResponse
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken
+        };
     }
 
 
-    public async Task<string> RefreshTokenAsync(string refreshToken)
+    public async Task<LoginResponse> RefreshTokenAsync(string refreshToken)
     {
         var token = await _refreshTokens.GetActiveAsync(refreshToken, CancellationToken.None);
-        if (token == null) throw new UnauthorizedAccessException("Invalid refresh token");
+        if (token is null) throw new UnauthorizedAccessException("Invalid refresh token");
 
-        return _tokenService.CreateAccessToken(token.User, _accessLifetime);
-    }
-    public async Task<(User, string, string)> RegisterAsync(string email, string userName, string password, CancellationToken ct)
-    {
-        var existing = await _users.GetByEmailAsync(email);
-        if (existing is not null) throw new InvalidOperationException("Email already registered.");
-
-        var user = new User
-        {
-            Email = email,
-            UserName = userName,
-            PasswordHash = _hasher.Hash(password)
-        };
-        await _users.AddAsync(user);
-
-        var access = _tokenService.CreateAccessToken(user, _accessLifetime);
-        var refresh = _tokenService.CreateRefreshToken();
-
-        await _refreshTokens.AddAsync(new RefreshToken
-        {
-            Token = refresh,
-            UserId = user.Id,
-            ExpiresAtUtc = DateTime.UtcNow.Add(_refreshLifetime)
-        }, ct);
-
-        return (user, access, refresh);
-    }
-
-    public async Task<(User, string, string)> LoginAsync(string email, string password, CancellationToken ct)
-    {
-        var user = await _users.GetByEmailAsync(email);
-        if (user is null) throw new UnauthorizedAccessException("Invalid credentials.");
-
-        if (!_hasher.Verify(user.PasswordHash, password))
-            throw new UnauthorizedAccessException("Invalid credentials.");
-
-        var access = _tokenService.CreateAccessToken(user, _accessLifetime);
-        var refresh = _tokenService.CreateRefreshToken();
-
-        await _refreshTokens.AddAsync(new RefreshToken
-        {
-            Token = refresh,
-            UserId = user.Id,
-            ExpiresAtUtc = DateTime.UtcNow.Add(_refreshLifetime)
-        }, ct);
-
-        return (user, access, refresh);
-    }
-
-    public async Task<(string, string)> RefreshAsync(string refreshToken, CancellationToken ct)
-    {
-        var rt = await _refreshTokens.GetActiveAsync(refreshToken, ct);
-        if (rt is null) throw new UnauthorizedAccessException("Invalid refresh token.");
-
-        var user = rt.User;
+        var user = token.User;
         var access = _tokenService.CreateAccessToken(user, _accessLifetime);
         var newRefresh = _tokenService.CreateRefreshToken();
 
         // revoke old, add new
-        await _refreshTokens.RevokeAsync(rt, ct);
+        await _refreshTokens.RevokeAsync(token, CancellationToken.None);
         await _refreshTokens.AddAsync(new RefreshToken
         {
             Token = newRefresh,
             UserId = user.Id,
             ExpiresAtUtc = DateTime.UtcNow.Add(_refreshLifetime)
-        }, ct);
+        }, CancellationToken.None);
 
-        return (access, newRefresh);
+        return new LoginResponse
+        {
+            AccessToken = access,
+            RefreshToken = newRefresh
+        };
     }
 
-    public async Task LogoutAsync(string refreshToken, CancellationToken ct)
+    public async Task<LogoutResponse> LogoutAsync(string refreshToken, CancellationToken ct)
     {
-        var rt = await _refreshTokens.GetActiveAsync(refreshToken, ct);
-        if (rt is null) return;
-        await _refreshTokens.RevokeAsync(rt, ct);
-    }
+        var token = await _refreshTokens.GetActiveAsync(refreshToken, ct);
+        if (token is null) return new LogoutResponse { Success = true, Message = "Expired or invalid refresh token" };
 
-    public Task<User?> MeAsync(Guid userId, CancellationToken ct) => _users.GetByIdAsync(userId);
+        await _refreshTokens.RevokeAsync(token, ct);
+        return new LogoutResponse { Success = true, Message = "Logged out successfully" };
+    }
 }

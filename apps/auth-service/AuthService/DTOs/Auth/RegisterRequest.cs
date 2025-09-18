@@ -13,11 +13,5 @@ namespace AuthService.DTOs.Auth
 
         [Required]
         public string Password { get; set; } = string.Empty;
-
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
-        public double? Weight { get; set; }
-        public double? Height { get; set; }
-        public Gender Gender { get; set; } = Gender.Unknown;
     }
 }

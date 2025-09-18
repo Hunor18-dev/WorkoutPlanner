@@ -6,6 +6,6 @@ namespace AuthService.Services.Interfaces
     {
         string CreateAccessToken(User user, TimeSpan lifetime);
         string CreateRefreshToken(); // random string
-        Guid? ValidateAndGetUserId(string jwt); // for /me if needed
+        Guid? ValidateAndGetUserId(string jwt); // for /me
     }
 }

@@ -1,4 +1,5 @@
 using AuthService.Data;
+using AuthService.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,39 +9,25 @@ namespace AuthService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // 👈 requires JWT
+    [Authorize] // requires JWT
     public class UsersController : ControllerBase
     {
-        private readonly AuthDbContext _db;
+        private readonly IUserService _userService;
 
-        public UsersController(AuthDbContext db)
+        public UsersController(IUserService userService)
         {
-            _db = db;
+            _userService = userService;
         }
 
         [HttpGet("me")]
         public async Task<IActionResult> GetMe()
         {
-            // Extract userId from JWT
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) 
-                              ?? User.FindFirstValue(ClaimTypes.Name);
+            var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+            var token = authHeader?.Replace("Bearer ", "");
 
-            if (userIdClaim == null)
-                return Unauthorized();
+            if (string.IsNullOrEmpty(token)) return Unauthorized();
 
-            if (!Guid.TryParse(userIdClaim, out var userId))
-                return Unauthorized();
-
-            var user = await _db.Users
-                .Where(u => u.Id == userId)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.Email,
-                    u.UserName,
-                    u.CreatedAt
-                })
-                .FirstOrDefaultAsync();
+            var user = await this._userService.GetByTokenAsync(token);
 
             if (user == null)
                 return NotFound();
