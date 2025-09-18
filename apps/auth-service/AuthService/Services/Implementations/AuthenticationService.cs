@@ -10,7 +10,7 @@ public class AuthenticationService : IAuthenticationService
     private readonly ITokenService _tokenService;
     private readonly IPasswordHasher _hasher;
     private readonly TimeSpan _accessLifetime = TimeSpan.FromMinutes(30);
-    private readonly TimeSpan _refreshLifetime = TimeSpan.FromDays(10);
+    private readonly TimeSpan _refreshLifetime = TimeSpan.FromHours(2);
 
 
     public AuthenticationService(IUserRepository users,
@@ -25,7 +25,7 @@ public class AuthenticationService : IAuthenticationService
         _hasher = hasher;
     }
 
-    public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
+    public async Task<RegisterResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
         if (await _users.GetByEmailAsync(request.Email) != null)
             throw new InvalidOperationException("Email already registered");
@@ -40,8 +40,7 @@ public class AuthenticationService : IAuthenticationService
 
         try
         {
-            await _users.AddAsync(user);
-            await _users.SaveChangesAsync();
+            await _users.AddAsync(user, ct);
         }
         catch (Exception ex)
         {
@@ -60,7 +59,7 @@ public class AuthenticationService : IAuthenticationService
         };
     }
 
-    public async Task<LoginResponse> LoginAsync(LoginRequest request)
+    public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken ct)
     {
         var user = await _users.GetByEmailAsync(request.Email);
         if (user is null || !_hasher.Verify(request.Password, user.PasswordHash))
@@ -77,7 +76,7 @@ public class AuthenticationService : IAuthenticationService
             Revoked = false
         };
 
-        await _refreshTokens.AddAsync(refreshTokenEntity, CancellationToken.None);
+        await _refreshTokens.AddAsync(refreshTokenEntity, ct);
 
         return new LoginResponse
         {
@@ -87,9 +86,9 @@ public class AuthenticationService : IAuthenticationService
     }
 
 
-    public async Task<LoginResponse> RefreshTokenAsync(string refreshToken)
+    public async Task<LoginResponse> RefreshTokenAsync(string refreshToken, CancellationToken ct)
     {
-        var token = await _refreshTokens.GetActiveAsync(refreshToken, CancellationToken.None);
+        var token = await _refreshTokens.GetActiveAsync(refreshToken);
         if (token is null) throw new UnauthorizedAccessException("Invalid refresh token");
 
         var user = token.User;
@@ -97,13 +96,13 @@ public class AuthenticationService : IAuthenticationService
         var newRefresh = _tokenService.CreateRefreshToken();
 
         // revoke old, add new
-        await _refreshTokens.RevokeAsync(token, CancellationToken.None);
+        await _refreshTokens.RevokeAsync(token, ct);
         await _refreshTokens.AddAsync(new RefreshToken
         {
             Token = newRefresh,
             UserId = user.Id,
             ExpiresAtUtc = DateTime.UtcNow.Add(_refreshLifetime)
-        }, CancellationToken.None);
+        }, ct);
 
         return new LoginResponse
         {
@@ -114,7 +113,7 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<LogoutResponse> LogoutAsync(string refreshToken, CancellationToken ct)
     {
-        var token = await _refreshTokens.GetActiveAsync(refreshToken, ct);
+        var token = await _refreshTokens.GetActiveAsync(refreshToken);
         if (token is null) return new LogoutResponse { Success = true, Message = "Expired or invalid refresh token" };
 
         await _refreshTokens.RevokeAsync(token, ct);

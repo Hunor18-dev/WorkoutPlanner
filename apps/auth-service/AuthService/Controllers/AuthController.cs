@@ -16,16 +16,16 @@ namespace AuthService.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterRequest request)
+        public async Task<IActionResult> Register(RegisterRequest request, CancellationToken ct)
         {
-            await _authService.RegisterAsync(request);
+            await _authService.RegisterAsync(request, ct);
             return Ok();
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequest dto)
+        public async Task<IActionResult> Login(LoginRequest dto, CancellationToken ct)
         {
-            LoginResponse response = await _authService.LoginAsync(dto);
+            LoginResponse response = await _authService.LoginAsync(dto, ct);
             if (response == null) return Unauthorized("Invalid credentials.");
 
             return Ok(new LoginResponse { AccessToken = response.AccessToken, RefreshToken = response.RefreshToken });

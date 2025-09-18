@@ -13,12 +13,6 @@ public class UserRepository : IUserRepository
     public Task<User?> GetByIdAsync(Guid id) =>
         _context.Users.FindAsync(id).AsTask();
 
-    public async Task AddAsync(User user) =>
-        await _context.Users.AddAsync(user);
-
-    public Task SaveChangesAsync() =>
-        _context.SaveChangesAsync();
-
     public Task<User?> GetByEmailAsync(string email, CancellationToken ct)
         => _context.Users.SingleOrDefaultAsync(x => x.Email == email, ct);
 
